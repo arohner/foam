@@ -1,7 +1,6 @@
 (ns foam.dom
   (:require [clojure.string :as str]
-            [foam.core :as foam]
-            [hiccup.core :as html]))
+            [foam.core :as foam]))
 
 (defprotocol ReactDOMRender
   (-render-to-string [this]))

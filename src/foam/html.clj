@@ -1,7 +1,5 @@
 (ns foam.html
-  (:require [foam.dom :as dom]
-            [hiccup.core :as html]
-            [schema.core :as s]))
+  (:require [foam.dom :as dom]))
 
 ;; hiccup-alike DSL, for foam.core
 

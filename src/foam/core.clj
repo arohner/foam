@@ -1,5 +1,4 @@
-(ns foam.core
-  (:require [hiccup.core :as html]))
+(ns foam.core)
 
 (defprotocol IDisplayName
   (display-name [this]))
