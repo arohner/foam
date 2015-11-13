@@ -143,8 +143,6 @@
           (keys m)))
 
 (defn build
-  ([f cursor]
-   (build f cursor nil))
   ([f cursor m]
    {:pre [(ifn? f) (or (nil? m) (map? m))]}
    (assert (satisfies? ICursor cursor))

@@ -8,7 +8,7 @@ Assumes you have a working CLJS Om app, and you want to add server-side renderin
 
 foam provides a minimal reimplementation of the om.core, om.dom
 namespaces in .clj code. Port your Om components and
-app-state to .cljc code. In your component namespaces,
+app-state to .cljc code. In your component namespaces:
 
 ```clojure
 (:require #?(:clj [foam.core :as om]
@@ -16,6 +16,8 @@ app-state to .cljc code. In your component namespaces,
           #?(:clj [foam.dom :as dom]
              :cljs [om.dom :as dom]))
 ```
+
+Everything *should* work without needing to modify your component code, with the exception of a few known limitations listed below.
 
 ### Server-side Rendering
 
@@ -36,7 +38,12 @@ Serve that in your http response.
 
 ## Limitations
 
-Lots. This is experimental, proof of concept.
+Lots. This is experimental, proof of concept. This list of limitations is not complete.
+
+- Not all Om protocols have been ported over yet
+- Bugs everywhere
+- Most unusual options aren't supported yet. Cursors and app-state can currently only be maps.
+- because CLJ doesn't support Javascript's ... special... arity-overloading, your om component functions must use the 3 arg constructor: `(defn foo [app owner opts])`. `foam.core/build` only provides the 3 arity version, to reduce confusion.
 
 ## License
 
