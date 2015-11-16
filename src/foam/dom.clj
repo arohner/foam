@@ -2,6 +2,134 @@
   (:require [clojure.string :as str]
             [foam.core :as foam]))
 
+;; tags that om.dom defines functions for
+(def om-tags
+  '[a
+    abbr
+    address
+    area
+    article
+    aside
+    audio
+    b
+    base
+    bdi
+    bdo
+    big
+    blockquote
+    body
+    br
+    button
+    canvas
+    caption
+    cite
+    code
+    col
+    colgroup
+    data
+    datalist
+    dd
+    del
+    dfn
+    div
+    dl
+    dt
+    em
+    embed
+    fieldset
+    figcaption
+    figure
+    footer
+    form
+    h1
+    h2
+    h3
+    h4
+    h5
+    h6
+    head
+    header
+    hr
+    html
+    i
+    iframe
+    img
+    ins
+    kbd
+    keygen
+    label
+    legend
+    li
+    link
+    main
+    map
+    mark
+    marquee
+    menu
+    menuitem
+    meta
+    meter
+    nav
+    noscript
+    object
+    ol
+    optgroup
+    output
+    p
+    param
+    pre
+    progress
+    q
+    rp
+    rt
+    ruby
+    s
+    samp
+    script
+    section
+    select
+    small
+    source
+    span
+    strong
+    style
+    sub
+    summary
+    sup
+    table
+    tbody
+    td
+    tfoot
+    th
+    thead
+    time
+    title
+    tr
+    track
+    u
+    ul
+    var
+    video
+    wbr
+
+    ;; svg
+    circle
+    ellipse
+    g
+    line
+    path
+    polyline
+    rect
+    svg
+    text
+    defs
+    linearGradient
+    polygon
+    radialGradient
+    stop
+    tspan
+    use])
+
 (defprotocol ReactDOMRender
   (-render-to-string [this]))
 
@@ -28,7 +156,7 @@
 
 (defn render-attr-map [attrs]
   (apply str
-         (sort (map render-attribute attrs))))
+         (sort (clojure.core/map render-attribute attrs))))
 
 (def ^{:doc "A list of tags that need an explicit ending tag when rendered."}
   container-tags
@@ -41,7 +169,7 @@
   [{:keys [tag attrs children]}]
   (if (or (seq children) (container-tags tag))
     (str "<" tag (render-attr-map attrs) ">"
-         (apply str (map -render-to-string children))
+         (apply str (clojure.core/map -render-to-string children))
          "</" tag ">")
     (str "<" tag (render-attr-map attrs) ">")))
 
@@ -56,20 +184,39 @@
     (assert (string? s))
     s))
 
-(defn element [{:keys [tag attrs children]}]
-  (assert (or (nil? attrs) (map? attrs)))
-  (assert (every? (fn [c]
-                    (when (not (satisfies? ReactDOMRender c))
-                      (inspect c))
-                    (satisfies? ReactDOMRender c)) children))
-  (map->Element {:tag tag
-                 :attrs attrs
-                 :children children}))
-
-(defn text [s]
+(defn text-node
+  "HTML text node"
+  [s]
   (map->Text {:s s}))
 
+(defn element
+  "Creates a dom node."
+  [{:keys [tag attrs children]}]
+  (assert (name tag))
+  (assert (or (nil? attrs) (map? attrs)))
+  (let [children (map (fn [c]
+                        (cond
+                          (satisfies? ReactDOMRender c) c
+                          (string? c) (text-node c))) children)]
+    (assert (every? (fn [c]
+                      (satisfies? ReactDOMRender c)) children))
+    (map->Element {:tag (name tag)
+                   :attrs attrs
+                   :children children})))
+
+(defn def-tag-fn [tag]
+  `(defn ~tag [~'attrs & ~'children]
+     (element {:tag (quote ~tag)
+               :attrs ~'attrs
+               :children ~'children})))
+
+(defmacro def-all-tags []
+  `(do
+     ~@(clojure.core/map def-tag-fn om-tags)))
+
+(def-all-tags)
+
 (defn render-to-string [com]
-  (let [elems (foam/react-render com)]
-    (assert (= 1 (count elems)))
-    (-render-to-string (first elems))))
+  (let [elem (foam/react-render com)]
+
+    (-render-to-string elem)))
