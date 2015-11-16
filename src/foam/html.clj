@@ -3,7 +3,7 @@
 
 ;; hiccup-alike DSL, for foam.core
 
-(declare html)
+(declare html*)
 
 (def ^{:doc "Regular expression that parses a CSS-style id and class from a tag name." :private true}
   re-tag #"([^\s\.#]+)?(?:#([^\s\.#]+))?(?:\.([^\s#]+))?")
@@ -26,12 +26,15 @@
   (let [[tag attrs content] (normalize-element expr)]
     (dom/element {:tag tag
                   :attrs attrs
-                  :children (mapcat html content)})))
+                  :children (mapcat html* content)})))
 
-(defn html [& content]
+(defn html* [& content]
   (for [expr content]
     (do
       (cond
         (vector? expr) (eval-vector expr)
-        (string? expr) (dom/text expr)
+        (string? expr) (dom/text-node expr)
         :else expr))))
+
+(defn html [& content]
+  (first (apply html* content)))
