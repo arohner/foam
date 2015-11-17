@@ -111,6 +111,24 @@
    (let [ks (if (sequential? korks) korks [korks])]
      (-get-state owner ks))))
 
+(defn set-state!
+  "Takes a pure owning component, a sequential list of keys and value and
+   sets the state of the component. Conceptually analagous to React
+   setState. Will schedule an Om re-render."
+  ([owner v]
+   {:pre [(satisfies? ISetState owner)]}
+   (-set-state! owner v))
+  ([owner korks v]
+   {:pre [(satisfies? ISetState owner)]}
+   (let [ks (if (sequential? korks) korks [korks])]
+     (-set-state! owner ks v))))
+
+(defn children [node]
+  (let [c (-> node :children deref)]
+    (if (ifn? c)
+      (reset! (:children node) (c node))
+      c)))
+
 (defrecord OmComponent [cursor state children init-state]
   IGetState
   (-get-state
@@ -128,7 +146,7 @@
     (swap! (:state this) assoc-in ks val))
   ReactRender
   (react-render [this]
-    (let [c (children this)]
+    (let [c (foam.core/children this)]
       (cond
         (satisfies? IRender c)
         (render c)
@@ -142,6 +160,11 @@
             :opts :shared ::index :instrument :descriptor}
           (keys m)))
 
+(defn set-init-state! [com]
+  (when (satisfies? IInitState (children com))
+    (assert (-> com :state))
+    (reset! (-> com :state) (-> com children init-state))))
+
 (defn build
   ([f cursor m]
    {:pre [(ifn? f) (or (nil? m) (map? m))]}
@@ -150,43 +173,36 @@
            (apply str "build options contains invalid keys, only :key, :key-fn :react-key, "
                   ":fn, :init-state, :state, and :opts allowed, given "
                   (interpose ", " (keys m))))
-   (cond
-     (nil? m)
-     (map->OmComponent {:cursor cursor
-                        :children
-                        (fn [this]
-                          (let [ret (f cursor this nil)]
-                            (valid-component? ret f)
-                            ret))})
+   (let [create-om-child (atom
+                          (fn [this]
+                            (let [ret (f cursor this nil)]
+                              (valid-component? ret f)
+                              ret)))
+         com (cond
+               (nil? m)
+               (map->OmComponent {:cursor cursor
+                                  :children create-om-child})
 
-     :else
-     (let [{:keys [key key-fn state init-state opts]} m
-           dataf   (get m :fn)
-           cursor' (if-not (nil? dataf)
-                     (if-let [i (::index m)]
-                       (dataf cursor i)
-                       (dataf cursor))
-                     cursor)
-           rkey    (cond
-                     (not (nil? key)) (get cursor' key)
-                     (not (nil? key-fn)) (key-fn cursor')
-                     :else (get m :react-key))
-           _ (assert (or (nil? state) (map? state)))
-           state (atom state)]
-       (map->OmComponent {:cursor cursor'
-                          :init_state init-state
-                          :state state
-                          :key (or rkey nil) ;; annoying
-                          :children
-                          (if (nil? opts)
-                            (fn [this]
-                              (let [ret (f cursor' this nil)]
-                                (valid-component? ret f)
-                                ret))
-                            (fn [this]
-                              (let [ret (f cursor' this opts)]
-                                (valid-component? ret f)
-                                ret)))})))))
+               :else
+               (let [{:keys [key key-fn state init-state opts]} m
+                     dataf   (get m :fn)
+                     cursor' (if-not (nil? dataf)
+                               (if-let [i (::index m)]
+                                 (dataf cursor i)
+                                 (dataf cursor))
+                               cursor)
+                     rkey    (cond
+                               (not (nil? key)) (get cursor' key)
+                               (not (nil? key-fn)) (key-fn cursor')
+                               :else (get m :react-key))
+                     _ (assert (or (nil? state) (map? state)))
+                     state (atom state)]
+                 (map->OmComponent {:cursor cursor'
+                                    :state state
+                                    :key (or rkey nil) ;; annoying
+                                    :children create-om-child})))]
+     (set-init-state! com)
+     com)))
 
 (defn root [f value {:keys [] :as options}])
 
@@ -195,18 +211,6 @@
   [atom]
   {:pre [(instance? clojure.lang.IDeref atom)]}
   (to-cursor @atom atom []))
-
-(defn get-state
-  ([owner]
-   (println "foam get-state owner"))
-  ([owner korks]
-   (println "foam get-state owner korks")))
-
-(defn set-state!
-  ([owner v]
-   (println "foam.core/set-state owner v"))
-  ([owner korks v]
-   (println "foam.core/set-state owner korks v")))
 
 (defn transact!
   "Given a tag, a cursor, an optional list of keys ks, mutate the tree
