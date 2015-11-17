@@ -12,11 +12,25 @@
     (render [this]
       (dom/h1 nil "Hello World"))))
 
+(defn nested-component [app owner opts]
+  (reify
+    foam/IRender
+    (render [this]
+      (dom/div nil
+       (dom/h1 nil "Hello World")
+       (dom/p nil "Some text")))))
+
 (deftest can-build
   (is (foam/build simple-component (foam/root-cursor (app-state)) {})))
 
 (deftest simple-render
   (let [com (foam/build simple-component (foam/root-cursor (app-state)) {})
+        s (dom/render-to-string com)]
+    (is s)
+    (is (string? s))))
+
+(deftest nested-render-works
+  (let [com (foam/build nested-component (foam/root-cursor (app-state)) {})
         s (dom/render-to-string com)]
     (is s)
     (is (string? s))))
