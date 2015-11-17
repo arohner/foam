@@ -164,16 +164,22 @@
     "h4" "h5" "h6" "head" "html" "i" "iframe" "label" "li" "ol" "option" "pre"
     "script" "span" "strong" "style" "table" "textarea" "ul"})
 
+(defn react-id-str [react-id]
+  (assert (vector? react-id))
+  (str "." (str/join "." react-id)))
+
 (defn render-element
   "Render an tag vector as a HTML element."
-  [{:keys [tag attrs children]}]
-  (if (or (seq children) (container-tags tag))
-    (str "<" tag (render-attr-map attrs) ">"
-         (apply str (clojure.core/map -render-to-string children))
-         "</" tag ">")
-    (str "<" tag (render-attr-map attrs) ">")))
+  [{:keys [tag attrs react-id children]}]
+  (assert react-id)
+  (let [attrs (merge {:data-react-id (react-id-str react-id)} attrs)]
+    (if (or (seq children) (container-tags tag))
+      (str "<" tag (render-attr-map attrs) ">"
+           (apply str (clojure.core/map -render-to-string children))
+           "</" tag ">")
+      (str "<" tag (render-attr-map attrs) ">"))))
 
-(defrecord Element [tag attrs children]
+(defrecord Element [tag attrs react-id children]
   ReactDOMRender
   (-render-to-string [this]
     (render-element this)))
@@ -216,7 +222,16 @@
 
 (def-all-tags)
 
+(defn assign-react-ids
+  ([elem]
+   (assign-react-ids elem [0]))
+  ([elem id]
+   (assert (vector? id))
+   (let [elem (assoc elem :react-id id)]
+     (update-in elem [:children] (fn [children]
+                                   (map-indexed (fn [i c]
+                                                  (assign-react-ids c (conj id i))) children))))))
 (defn render-to-string [com]
-  (let [elem (foam/react-render com)]
-
+  (let [elem (foam/react-render com)
+        elem (assign-react-ids elem)]
     (-render-to-string elem)))
