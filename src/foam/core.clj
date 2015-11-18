@@ -48,16 +48,6 @@
 
 (declare to-cursor)
 
-(deftype MapCursor [value state path]
-  clojure.lang.IDeref
-  (deref [this]
-    (get-in @state path ::invalid))
-  IValue
-  (-value [_] value)
-  ICursor
-  (-path [_] path)
-  (-state [_] state))
-
 (defn cursor? [x]
   (satisfies? ICursor x))
 
@@ -70,8 +60,31 @@
       (map? val) (MapCursor. val state path)
       :else val)))
 
-(defprotocol IValue
-  (-value [x]))
+(defprotocol ICursorDerive
+  (-derive [cursor derived state path]))
+
+(extend-type Object
+  ICursorDerive
+  (-derive [this derived state path]
+    (to-cursor derived state path)))
+
+(deftype MapCursor [value state path]
+  clojure.lang.IDeref
+  (deref [this]
+    (get-in @state path ::invalid))
+  IValue
+  (-value [_] value)
+  ICursor
+  (-path [_] path)
+  (-state [_] state)
+  clojure.lang.ILookup
+  (valAt [this k]
+    (.valAt this k nil))
+  (valAt [this k not-found]
+    (let [v (get value k ::not-found)]
+      (if-not (= v ::not-found)
+        (-derive this v state (conj path k))
+        not-found))))
 
 (defn valid-component? [x f]
   (assert
@@ -212,6 +225,7 @@
   {:pre [(instance? clojure.lang.IDeref atom)]}
   (to-cursor @atom atom []))
 
+(declare notify*)
 (defn transact!
   "Given a tag, a cursor, an optional list of keys ks, mutate the tree
   at the path specified by the cursor + the optional keys by applying
@@ -220,12 +234,32 @@
   ([cursor f])
   ([cursor korks f])
   ([cursor korks f tag]
-   (println "transact!")))
+   (let [state (foam.core/state cursor)
+         old-state @state
+         path (into (foam.core/path cursor) korks)
+         ret (cond
+               (empty? path) (swap! state f)
+               :else (swap! state update-in path f))]
+     (when-not (= ret ::defer)
+       (let [tx-data {:path path
+                      :old-value (get-in old-state path)
+                      :new-value (get-in @state path)
+                      :old-state old-state
+                      :new-state @state}]
+         ;; (if-not (nil? tag)
+         ;;   (notify* cursor (assoc tx-data :tag tag))
+         ;;   (notify* cursor tx-data))
+         )))))
 
 (defn update!
+  "Like transact! but no function provided, instead a replacement
+  value is given."
   ([cursor v]
-   (println "foam update! cursor v"))
+   {:pre [(cursor? cursor)]}
+   (transact! cursor [] (fn [_] v) nil))
   ([cursor korks v]
-   (println "foam update! cursor korks v"))
+   {:pre [(cursor? cursor)]}
+   (transact! cursor korks (fn [_] v) nil))
   ([cursor korks v tag]
-   (println "foam update! cursor korks v tag")))
+   {:pre [(cursor? cursor)]}
+   (transact! cursor korks (fn [_] v) tag)))

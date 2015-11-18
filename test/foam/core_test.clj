@@ -58,3 +58,59 @@
     (is (nil? (foam/get-state com [:bbq])))
     (foam/set-state! com [:bbq] 42)
     (is (= 42 (foam/get-state com [:bbq])))))
+
+(defn render-state-component [app owner opts]
+  (reify
+    foam/IInitState
+    (init-state [this]
+      {:who "CLJS"})
+    foam/IRenderState
+    (render-state [this state]
+      (dom/h1 nil (str "Hello, " (:who state))))))
+
+(deftest render-state-works
+  (let [com (foam/build render-state-component (foam/root-cursor (app-state)) {})
+        s (dom/render-to-string com)]
+    (is s)
+    (is (string? s))
+    (is (re-find #"Hello, CLJS" s))))
+
+(defn app-state-component [app owner opts]
+  (reify
+    foam/IRender
+    (render [this]
+      (dom/h1 nil (str "Hello, " (:who state))))))
+
+;; (deftest transact-works
+;;   (let [state (app-state)
+;;         cursor (foam/root-cursor state)
+;;         com (foam/build app-state-component cursor {})
+;;         _ (foam/transact! cursor )
+;;         s (dom/render-to-string com)]
+;;     (is s)
+;;     (is (string? s))
+;;     (is (re-find #"Hello, CLJS" s)))
+;;   )
+
+(deftest update-works
+  (let [state (app-state)
+        cursor (foam/root-cursor state)]
+    (is (= 42 (:foo @state)))
+    (is (nil? (:bar @state)))
+    (foam/update! cursor [:bar] 17)
+    (is (= 17 (:bar @state)))))
+
+(deftest cursors-work
+  (let [state (atom {:foo :bar})
+        cursor (foam/root-cursor state)]
+    (is (= :bar (get cursor :foo)))))
+
+(deftest sub-cursors-work
+  (let [state (atom {:foo {:bar {:bbq 3}}})
+        cursor (foam/root-cursor state)]
+
+    (is (= {:bar {:bbq 3}} (foam/value (get cursor :foo))))
+    (is (foam/cursor? (get cursor :foo)))
+
+    (is (= 3 (get-in cursor [:foo :bar :bbq])))
+    (is (not (cursor? (get-in cursor [:foo :bar :bbq]))))))
