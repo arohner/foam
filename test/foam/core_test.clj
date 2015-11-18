@@ -81,16 +81,14 @@
     (render [this]
       (dom/h1 nil (str "Hello, " (:who state))))))
 
-;; (deftest transact-works
-;;   (let [state (app-state)
-;;         cursor (foam/root-cursor state)
-;;         com (foam/build app-state-component cursor {})
-;;         _ (foam/transact! cursor )
-;;         s (dom/render-to-string com)]
-;;     (is s)
-;;     (is (string? s))
-;;     (is (re-find #"Hello, CLJS" s)))
-;;   )
+(deftest transact-works
+  (let [state (app-state)
+        cursor (foam/root-cursor state)
+        com (foam/build app-state-component cursor {})
+
+        s (dom/render-to-string com)]
+    (foam/transact! cursor :who (fn [_] "CLJS"))
+    (is (= "CLJS" (get @state :who)))))
 
 (deftest update-works
   (let [state (app-state)

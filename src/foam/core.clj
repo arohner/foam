@@ -231,12 +231,16 @@
   at the path specified by the cursor + the optional keys by applying
   f to the specified value in the tree. An Om re-render will be
   triggered."
-  ([cursor f])
-  ([cursor korks f])
+  ([cursor f]
+   (transact! cursor [] f nil))
+  ([cursor korks f]
+   (transact! cursor korks f nil))
   ([cursor korks f tag]
    (let [state (foam.core/state cursor)
          old-state @state
-         path (into (foam.core/path cursor) korks)
+         path (if (keyword? korks)
+                [korks]
+                (into (foam.core/path cursor) korks))
          ret (cond
                (empty? path) (swap! state f)
                :else (swap! state update-in path f))]
