@@ -121,7 +121,7 @@
     (is (foam/cursor? (get cursor :foo)))
 
     (is (= 3 (get-in cursor [:foo :bar :bbq])))
-    (is (not (cursor? (get-in cursor [:foo :bar :bbq]))))))
+    (is (not (foam/cursor? (get-in cursor [:foo :bar :bbq]))))))
 
 (defn clj-expr-component [app owner opts]
   (reify
@@ -135,7 +135,6 @@
 (deftest render-handles-clj-exprs
   (let [com (foam/build clj-expr-component (foam/root-cursor (app-state)) {})
         tree (foam/react-render com)]
-    (inspect tree)
     (is (foam/valid-dom-tree? tree))
     (is (seq (foam/-children tree)))
     (re-find #"Hello" (dom/render-to-string com))))

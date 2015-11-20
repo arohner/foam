@@ -22,5 +22,4 @@
   (let [ret (html/html
              [:h1 "Hello World"])]
     (is (satisfies? foam/ReactDOMRender ret))
-    (is (-> ret :tag (= "h1")))
-    (clojure.pprint/pprint ret)))
+    (is (-> ret :tag (= "h1")))))
