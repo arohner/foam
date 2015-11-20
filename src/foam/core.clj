@@ -267,3 +267,40 @@
   ([cursor korks v tag]
    {:pre [(cursor? cursor)]}
    (transact! cursor korks (fn [_] v) tag)))
+
+(defn update-state!
+  "Takes a pure owning component, a sequential list of keys and a
+   function to transition the state of the component. Conceptually
+   analagous to React setState. Will schedule an Om re-render."
+  ([owner f]
+   {:pre [(component? owner) (ifn? f)]}
+   (set-state! owner (f (get-state owner))))
+  ([owner korks f]
+   {:pre [(component? owner) (ifn? f)]}
+   (set-state! owner korks (f (get-state owner korks)))))
+
+(defn refresh!
+  "Utility to re-render an owner."
+  [owner]
+  {:pre [(component? owner)]}
+  (update-state! owner identity))
+
+(defn get-props
+  "Given an owning Pure node return the Om props. Analogous to React
+  component props."
+  ([x]
+   {:pre [(component? x)]}
+   (-> x :cursor))
+  ([x korks]
+   {:pre [(component? x)]}
+   (let [korks (if (sequential? korks) korks [korks])]
+     (cond-> (:cursor x)
+       (seq korks) (get-in korks)))))
+
+(defn get-node
+  "A helper function to get at React DOM refs. Given a owning pure node
+  extract the DOM ref specified by name."
+  ([owner])
+  ([owner node]
+   ;; not sure it makes sense for foam to support this. Certainly DOM methods won't work on the node
+   ))

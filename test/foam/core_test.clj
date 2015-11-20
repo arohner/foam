@@ -79,14 +79,19 @@
   (reify
     foam/IRender
     (render [this]
-      (dom/h1 nil (str "Hello, " (:who state))))))
+      (dom/h1 nil (str "Hello, " (get-in app [:who]))))))
+
+(deftest app-state-works
+  (let [state (app-state)
+        cursor (foam/root-cursor state)
+        _ (foam/update! cursor :who "CLJS")
+        com (foam/build app-state-component cursor {})
+        s (dom/render-to-string com)]
+    (is (re-find #"Hello, CLJS" s))))
 
 (deftest transact-works
   (let [state (app-state)
-        cursor (foam/root-cursor state)
-        com (foam/build app-state-component cursor {})
-
-        s (dom/render-to-string com)]
+        cursor (foam/root-cursor state)]
     (foam/transact! cursor :who (fn [_] "CLJS"))
     (is (= "CLJS" (get @state :who)))))
 
@@ -112,3 +117,28 @@
 
     (is (= 3 (get-in cursor [:foo :bar :bbq])))
     (is (not (cursor? (get-in cursor [:foo :bar :bbq]))))))
+
+(defn clj-expr-component [app owner opts]
+  (reify
+    foam/IRender
+    (render [this]
+      (dom/div nil
+       (if (even? (rand-int 2))
+         (foam/build simple-component app {})
+         (foam/build simple-component app {}))))))
+
+(deftest render-handles-clj-exprs
+  (let [com (foam/build clj-expr-component (foam/root-cursor (app-state)) {})
+        tree (foam/react-render com)]
+    (inspect tree)
+    (is (foam/valid-dom-tree? tree))
+    (is (seq (foam/-children tree)))
+    (re-find #"Hello" (dom/render-to-string com))))
+
+(deftest get-props-works
+  (let [state (atom {:foo :bar})
+        cursor (foam/root-cursor state)
+        com (foam/build simple-component cursor {})]
+    (is (= :bar (foam/get-props com [:foo])))
+
+    ))
