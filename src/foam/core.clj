@@ -185,6 +185,7 @@
                                              (map (fn [c]
                                                     (cond
                                                       (satisfies? ReactRender c) (react-render c)
+                                                      (satisfies? ReactDOMRender c) c
                                                       :else (assert false))) children)))
                 ret)]
       (assert (valid-dom-tree? ret))
