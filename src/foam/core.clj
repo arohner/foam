@@ -51,22 +51,8 @@
 (defn cursor? [x]
   (satisfies? ICursor x))
 
-(defn to-cursor
-  ([val] (to-cursor val nil []))
-  ([val state] (to-cursor val state []))
-  ([val state path]
-    (cond
-      (cursor? val) val
-      (map? val) (MapCursor. val state path)
-      :else val)))
-
 (defprotocol ICursorDerive
   (-derive [cursor derived state path]))
-
-(extend-type Object
-  ICursorDerive
-  (-derive [this derived state path]
-    (to-cursor derived state path)))
 
 (deftype MapCursor [value state path]
   clojure.lang.IDeref
@@ -85,6 +71,20 @@
       (if-not (= v ::not-found)
         (-derive this v state (conj path k))
         not-found))))
+
+(defn to-cursor
+  ([val] (to-cursor val nil []))
+  ([val state] (to-cursor val state []))
+  ([val state path]
+    (cond
+      (cursor? val) val
+      (map? val) (MapCursor. val state path)
+      :else val)))
+
+(extend-type Object
+  ICursorDerive
+  (-derive [this derived state path]
+    (to-cursor derived state path)))
 
 (defn valid-component? [x f]
   (assert
