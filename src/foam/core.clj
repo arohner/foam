@@ -110,10 +110,9 @@
   (-set-state! [this val] [this ks val]))
 
 (defprotocol ReactRender
-  "represents an OmComponent"
   (react-render
-    "must returns a ReactDOMRender node"
-    [this]))
+    [this]
+    "must return a ReactDOMRender instance"))
 
 (defprotocol ReactDOMRender
   "represents a DOM node, implements render-to-string"
