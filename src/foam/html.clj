@@ -18,7 +18,8 @@
         tag-attrs        {:id id
                           :class (if class (.replace ^String class "." " "))}
         map-attrs        (first content)]
-    (if (map? map-attrs)
+    (if (and (map? map-attrs)
+             (not (record? map-attrs)))
       [tag (merge tag-attrs map-attrs) (next content)]
       [tag tag-attrs content])))
 
@@ -26,7 +27,7 @@
   (let [[tag attrs content] (normalize-element expr)]
     (dom/element {:tag tag
                   :attrs attrs
-                  :children (mapcat html* content)})))
+                  :children (apply html* content)})))
 
 (defn html* [& content]
   (for [expr content]

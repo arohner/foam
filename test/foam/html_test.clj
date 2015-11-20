@@ -1,5 +1,6 @@
 (ns foam.html-test
   (:require [clojure.test :refer :all]
+            [foam.core :as foam]
             [foam.html :as html]))
 
 (deftest parsing-tags
@@ -16,3 +17,10 @@
                                :class "bar baz"} nil]
        [:.bar] ["div" {:id nil
                        :class "bar"} nil]))
+
+(deftest html-return-types
+  (let [ret (html/html
+             [:h1 "Hello World"])]
+    (is (satisfies? foam/ReactDOMRender ret))
+    (is (-> ret :tag (= "h1")))
+    (clojure.pprint/pprint ret)))

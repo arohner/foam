@@ -130,9 +130,6 @@
     tspan
     use])
 
-(defprotocol ReactDOMRender
-  (-render-to-string [this]))
-
 (defn escape-html
   "Change special characters into HTML character entities."
   [text]
@@ -175,17 +172,28 @@
   (let [attrs (merge {:data-react-id (react-id-str react-id)} attrs)]
     (if (or (seq children) (container-tags tag))
       (str "<" tag (render-attr-map attrs) ">"
-           (apply str (clojure.core/map -render-to-string children))
+           (apply str (clojure.core/map foam/-render-to-string children))
            "</" tag ">")
       (str "<" tag (render-attr-map attrs) ">"))))
 
 (defrecord Element [tag attrs react-id children]
-  ReactDOMRender
+  foam/ReactRender
+  (react-render [this]
+    (update-in this [:children] (fn [children]
+                                  (clojure.core/map (fn [c]
+                                                      (cond
+                                                        (satisfies? foam/ReactRender c) (foam/react-render c)
+                                                        :else c)) children))))
+  foam/ReactDOMRender
+  (-children [this]
+    children)
   (-render-to-string [this]
     (render-element this)))
 
 (defrecord Text [s]
-  ReactDOMRender
+  foam/ReactDOMRender
+  (-children [this]
+    nil)
   (-render-to-string [this]
     (assert (string? s))
     s))
@@ -195,17 +203,20 @@
   [s]
   (map->Text {:s s}))
 
-(defn element
+(s/defn element :- (s/protocol foam/ReactDOMRender)
   "Creates a dom node."
-  [{:keys [tag attrs children]}]
+  [{:keys [tag attrs children] :as elem}]
   (assert (name tag))
-  (assert (or (nil? attrs) (map? attrs)))
-  (let [children (map (fn [c]
-                        (cond
-                          (satisfies? ReactDOMRender c) c
-                          (string? c) (text-node c))) children)]
+  (assert (or (nil? attrs) (map? attrs)) (format "elem %s attrs invalid" elem))
+  (let [children (clojure.core/map (fn [c]
+                                     (cond
+                                       (satisfies? foam/ReactDOMRender c) c
+                                       (satisfies? foam/ReactRender c) c
+                                       (string? c) (text-node c)
+                                       :else (assert false c))) children)]
     (assert (every? (fn [c]
-                      (satisfies? ReactDOMRender c)) children))
+                      (or (satisfies? foam/ReactDOMRender c)
+                          (satisfies? foam/ReactRender c))) children))
     (map->Element {:tag (name tag)
                    :attrs attrs
                    :children children})))
@@ -234,4 +245,4 @@
 (defn render-to-string [com]
   (let [elem (foam/react-render com)
         elem (assign-react-ids elem)]
-    (-render-to-string elem)))
+    (foam/-render-to-string elem)))

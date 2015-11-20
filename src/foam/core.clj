@@ -110,7 +110,15 @@
   (-set-state! [this val] [this ks val]))
 
 (defprotocol ReactRender
-  (react-render [this]))
+  "represents an OmComponent"
+  (react-render
+    "must returns a ReactDOMRender node"
+    [this]))
+
+(defprotocol ReactDOMRender
+  "represents a DOM node, implements render-to-string"
+  (-children [this])
+  (-render-to-string [this]))
 
 (defn get-state
   "Returns the component local state of an owning component. owner is
@@ -142,6 +150,12 @@
       (reset! (:children node) (c node))
       c)))
 
+(defn valid-dom-tree? [x]
+  (assert (satisfies? ReactDOMRender x))
+  (assert (every? valid-dom-tree? (-children x)))
+  (and (satisfies? ReactDOMRender x)
+       (every? valid-dom-tree? (-children x))))
+
 (defrecord OmComponent [cursor state children init-state]
   IGetState
   (-get-state
@@ -159,14 +173,26 @@
     (swap! (:state this) assoc-in ks val))
   ReactRender
   (react-render [this]
-    (let [c (foam.core/children this)]
-      (cond
-        (satisfies? IRender c)
-        (render c)
+    (let [c (foam.core/children this)
+          ret (cond
+                (satisfies? IRender c)
+                (render c)
 
-        (satisfies? IRenderState c)
-        (render-state c (get-state this))
-        :else c))))
+                (satisfies? IRenderState c)
+                (render-state c (get-state this))
+                :else c)
+          ret (if (-children ret)
+                (update-in ret [:children] (fn [children]
+                                             (map (fn [c]
+                                                    (cond
+                                                      (satisfies? ReactRender c) (react-render c)
+                                                      :else (assert false))) children)))
+                ret)]
+      (assert (valid-dom-tree? ret))
+      ret)))
+
+(defn component? [x]
+  (instance? OmComponent x))
 
 (defn valid-opts? [m]
   (every? #{:key :react-key :key-fn :fn :init-state :state

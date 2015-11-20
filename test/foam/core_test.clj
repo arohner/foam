@@ -23,6 +23,11 @@
 (deftest can-build
   (is (foam/build simple-component (foam/root-cursor (app-state)) {})))
 
+(deftest valid-dom-tree-works
+  (let [com (foam/build simple-component (foam/root-cursor (app-state)) {})
+        tree (foam/react-render com)]
+    (foam/valid-dom-tree? tree)))
+
 (deftest simple-render
   (let [com (foam/build simple-component (foam/root-cursor (app-state)) {})
         s (dom/render-to-string com)]
