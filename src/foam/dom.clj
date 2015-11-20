@@ -201,9 +201,20 @@
   [s]
   (map->Text {:s s}))
 
-(s/defn element :- (s/protocol foam/ReactDOMRender)
+(defn valid-element? [e]
+  (assert (satisfies? foam/ReactDOMRender e))
+  (assert (every? (fn [c]
+                    (or (satisfies? foam/ReactDOMRender c)
+                        (satisfies? foam/ReactRender c))) (foam/-children e)))
+  (and (satisfies? foam/ReactDOMRender e)
+       (every? (fn [c]
+                 (or (satisfies? foam/ReactDOMRender c)
+                     (satisfies? foam/ReactRender c))) (foam/-children e))))
+
+(defn element
   "Creates a dom node."
   [{:keys [tag attrs children] :as elem}]
+  {:post [(valid-element? %)]}
   (assert (name tag))
   (assert (or (nil? attrs) (map? attrs)) (format "elem %s attrs invalid" elem))
   (let [children (clojure.core/map (fn [c]
@@ -212,9 +223,7 @@
                                        (satisfies? foam/ReactRender c) c
                                        (string? c) (text-node c)
                                        :else (assert false c))) children)]
-    (assert (every? (fn [c]
-                      (or (satisfies? foam/ReactDOMRender c)
-                          (satisfies? foam/ReactRender c))) children))
+
     (map->Element {:tag (name tag)
                    :attrs attrs
                    :children children})))
