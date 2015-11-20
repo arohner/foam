@@ -144,12 +144,10 @@
 
 (defn render-attribute [[name value]]
   (cond
-    (true? value)
-    (str " " (clojure.core/name name))
-    (not value)
-    ""
-    :else
-    (xml-attribute name value)))
+    (true? value) (str " " (clojure.core/name name))
+    (fn? value) ""
+    (not value) ""
+    :else (xml-attribute name value)))
 
 (defn render-attr-map [attrs]
   (apply str
