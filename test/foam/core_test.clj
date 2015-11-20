@@ -86,14 +86,6 @@
     (render [this]
       (dom/h1 nil (str "Hello, " (get-in app [:who]))))))
 
-(deftest app-state-works
-  (let [state (app-state)
-        cursor (foam/root-cursor state)
-        _ (foam/update! cursor :who "CLJS")
-        com (foam/build app-state-component cursor {})
-        s (dom/render-to-string com)]
-    (is (re-find #"Hello, CLJS" s))))
-
 (deftest transact-works
   (let [state (app-state)
         cursor (foam/root-cursor state)]
