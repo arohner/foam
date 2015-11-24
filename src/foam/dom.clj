@@ -222,7 +222,9 @@
                                        (satisfies? foam/ReactDOMRender c) c
                                        (satisfies? foam/ReactRender c) c
                                        (string? c) (text-node c)
-                                       :else (assert false c))) children)]
+                                       :else (do
+                                               (inspect c)
+                                               (assert false c)))) children)]
 
     (map->Element {:tag (name tag)
                    :attrs attrs

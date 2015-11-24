@@ -13,10 +13,20 @@
        [:div#foo.bar.baz] ["div" {:id "foo"
                                   :class "bar baz"} nil]
 
-       [:#foo.bar.baz] ["div" {:id "foo"
-                               :class "bar baz"} nil]
-       [:.bar] ["div" {:id nil
-                       :class "bar"} nil]))
+       (testing "no tag name"
+         [:#foo.bar] ["div" {:id "foo"
+                             :class "bar"} nil])
+
+       (testing "id second"
+         [:.bar#foo] ["div" {:id "foo"
+                             :class "bar"} nil])
+
+       (testing "multiple classes"
+         [:#foo.bar.baz] ["div" {:id "foo"
+                                 :class "bar baz"} nil])
+       (testing "class no id"
+         [:.bar] ["div" {:id nil
+                         :class "bar"} nil])))
 
 (deftest html-return-types
   (let [ret (html/html
