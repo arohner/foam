@@ -223,7 +223,6 @@
                                        (satisfies? foam/ReactRender c) c
                                        (string? c) (text-node c)
                                        :else (do
-                                               (inspect c)
                                                (assert false c)))) children)]
 
     (map->Element {:tag (name tag)
