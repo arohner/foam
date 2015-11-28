@@ -43,7 +43,7 @@ Lots. This is experimental, proof of concept. This list of limitations is not co
 - Not all Om protocols have been ported over yet
 - Bugs everywhere
 - Most unusual options aren't supported yet. Cursors and app-state can currently only be maps.
-- because CLJ doesn't support Javascript's ... special... arity-overloading, your om component functions must use the 3 arg constructor: `(defn foo [app owner opts])`. `foam.core/build` only provides the 3 arity version, to reduce confusion.
+- because CLJ doesn't support Javascript's ... special... arity-overloading, your om component functions must use the 3 arg constructor: `(defn foo [app owner opts])`, rather than the 2-arg constructor: `(defn foo [app owner])`. `foam.core/build` only provides the 3 arity version, to reduce confusion.
 
 ## License
 
