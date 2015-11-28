@@ -42,7 +42,7 @@ Serve that in your http response.
 
 ## Limitations
 
-Lots. This is experimental, proof of concept. This list of limitations is not complete.
+Lots. This is alpha. This list of limitations is not complete.
 
 - Not all Om protocols have been ported over yet
 - Bugs everywhere
