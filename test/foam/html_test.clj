@@ -5,28 +5,35 @@
 
 (deftest parsing-tags
   (are [expr expected] (= expected (html/normalize-element expr))
-       [:div] ["div" {:id nil
-                      :class nil} nil]
+       [:div] ["div" {} nil]
+
+       [:div#foo] ["div" {:id "foo"} nil]
+
+       [:.bar] ["div" {:class "bar"} nil]
+
+       [:#foo] ["div" {:id "foo"} nil]
+
+       [:div.bar] ["div" {:class "bar"} nil]
+
        [:div#foo.bar] ["div" {:id "foo"
                               :class "bar"} nil]
+
+       [:div.bar {:display "none"} "hello"] ["div" {:class "bar"
+                                                    :display "none"} ["hello"]]
+
+       [:div.bar {:class "foo"} "hello"] ["div" {:class "bar foo"} ["hello"]]
 
        [:div#foo.bar.baz] ["div" {:id "foo"
                                   :class "bar baz"} nil]
 
-       (testing "no tag name"
-         [:#foo.bar] ["div" {:id "foo"
-                             :class "bar"} nil])
+       [:#foo.bar] ["div" {:id "foo"
+                           :class "bar"} nil]
 
-       (testing "id second"
-         [:.bar#foo] ["div" {:id "foo"
-                             :class "bar"} nil])
+       [:.bar#foo] ["div" {:id "foo"
+                           :class "bar"} nil]
 
-       (testing "multiple classes"
-         [:#foo.bar.baz] ["div" {:id "foo"
-                                 :class "bar baz"} nil])
-       (testing "class no id"
-         [:.bar] ["div" {:id nil
-                         :class "bar"} nil])))
+       [:#foo.bar.baz] ["div" {:id "foo"
+                               :class "bar baz"} nil]))
 
 (deftest html-return-types
   (let [ret (html/html
