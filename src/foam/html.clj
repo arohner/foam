@@ -58,7 +58,8 @@
   (let [[tag id class] (match-tag tag)
         tag-attrs (compact-map {:id id :class class})
         map-attrs (first content)
-        [tag attrs content] (if (map? map-attrs)
+        [tag attrs content] (if (and (map? map-attrs)
+                                     (not (record? map-attrs)))
                               [tag (merge-with-class tag-attrs map-attrs) (next content)]
                               [tag tag-attrs content])
         attrs (if (:class attrs)
