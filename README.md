@@ -1,5 +1,9 @@
 # Foam
 
+[![Clojars Project](http://clojars.org/arohner/foam/latest-version.svg)](http://clojars.org/arohner/foam)
+
+[![Circle CI](https://circleci.com/gh/arohner/foam.svg?style=svg)](https://circleci.com/gh/arohner/foam)
+
 A hack to add server-side rendering to Om
 
 Assumes you have a working CLJS Om app, and you want to add server-side rendering, without using selenium or node.
