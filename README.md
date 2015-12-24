@@ -56,6 +56,8 @@ Copyright © 2015 Allen Rohner
 Distributed under the Eclipse Public License either version 1.0 or (at
 your option) any later version.
 
+Contains code adapted from [Om](https://github.com/omcljs/om)
+
 Contains code adapted from [hiccup](https://github.com/weavejester/hiccup)
 
 Contains code adapted from [sablono](https://github.com/r0man/sablono)
