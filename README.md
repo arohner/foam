@@ -29,8 +29,8 @@ In clj, call
 
 ```clojure
 (ns foo.bar
-  (:require [foam.core :as foam
-             foam.dom :as dom]))
+  (:require [foam.core :as foam]
+            [foam.dom :as dom]))
 
 (let [state (your-app-state)
       cursor (foam/root-cursor state)
