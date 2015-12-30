@@ -130,9 +130,19 @@
     tspan
     use])
 
+(def ^:dynamic *html-mode* :xhtml)
+
+(defn xml-mode? []
+  (#{:xml :xhtml} *html-mode*))
+
+(defn html-mode? []
+  (#{:html :xhtml} *html-mode*))
+
 (defn escape-html
   "Change special characters into HTML character entities."
   [text]
+  {:pre [(string? text)]
+   :post [(string? %)]}
   (.. ^String (clojure.core/name text)
     (replace "&"  "&amp;")
     (replace "<"  "&lt;")
@@ -153,22 +163,29 @@
   (apply str
          (sort (clojure.core/map render-attribute attrs))))
 
-(def ^{:doc "A list of tags that need an explicit ending tag when rendered."}
-  container-tags
-  #{"a" "b" "body" "canvas" "dd" "div" "dl" "dt" "em" "fieldset" "form" "h1" "h2" "h3"
-    "h4" "h5" "h6" "head" "html" "i" "iframe" "label" "li" "ol" "option" "pre"
-    "script" "span" "strong" "style" "table" "textarea" "ul"})
+(def ^{:doc "A list of elements that must be rendered without a closing tag."
+       :private true}
+  void-tags
+  #{"area" "base" "br" "col" "command" "embed" "hr" "img" "input" "keygen" "link"
+    "meta" "param" "source" "track" "wbr"})
+
+(defn container-tag?
+  "Returns true if the tag has content or is not a void tag. In non-HTML modes,
+  all contentless tags are assumed to be void tags."
+  [tag content]
+  (or content
+      (and (html-mode?) (not (void-tags tag)))))
 
 (defn react-id-str [react-id]
   (assert (vector? react-id))
   (str "." (str/join "." react-id)))
 
 (defn render-element
-  "Render an tag vector as a HTML element."
+  "Render an tag vector as a HTML element string."
   [{:keys [tag attrs react-id children]}]
   (assert react-id)
   (let [attrs (merge {:data-react-id (react-id-str react-id)} attrs)]
-    (if (or (seq children) (container-tags tag))
+    (if (container-tag? tag (seq children))
       (str "<" tag (render-attr-map attrs) ">"
            (apply str (clojure.core/map foam/-render-to-string children))
            "</" tag ">")
