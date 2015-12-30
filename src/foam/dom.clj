@@ -234,13 +234,13 @@
   {:post [(valid-element? %)]}
   (assert (name tag))
   (assert (or (nil? attrs) (map? attrs)) (format "elem %s attrs invalid" elem))
-  (let [children (clojure.core/map (fn [c]
-                                     (cond
-                                       (satisfies? foam/ReactDOMRender c) c
-                                       (satisfies? foam/ReactRender c) c
-                                       (string? c) (text-node c)
-                                       :else (do
-                                               (assert false c)))) children)]
+  (let [children (doall (clojure.core/map (fn [c]
+                                            (cond
+                                              (satisfies? foam/ReactDOMRender c) c
+                                              (satisfies? foam/ReactRender c) c
+                                              (string? c) (text-node c)
+                                              :else (do
+                                                      (assert false c)))) children))]
 
     (map->Element {:tag (name tag)
                    :attrs attrs
