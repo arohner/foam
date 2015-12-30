@@ -1,4 +1,4 @@
-(defproject arohner/foam "0.1.4-SNAPSHOT"
+(defproject arohner/foam "0.1.4"
   :description "server-side rendering for Om"
   :url "http://github.com/arohner/foam"
   :license {:name "Eclipse Public License"
