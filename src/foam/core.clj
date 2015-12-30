@@ -174,11 +174,8 @@
   (react-render [this]
     (let [c (foam.core/children this)
           ret (cond
-                (satisfies? IRender c)
-                (render c)
-
-                (satisfies? IRenderState c)
-                (render-state c (get-state this))
+                (satisfies? IRender c) (render c)
+                (satisfies? IRenderState c) (render-state c (get-state this))
                 :else c)
           ret (if (-children ret)
                 (update-in ret [:children] (fn [children]
