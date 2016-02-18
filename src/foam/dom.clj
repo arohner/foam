@@ -161,7 +161,7 @@
 
 (defn render-attr-map [attrs]
   (apply str
-         (sort (clojure.core/map render-attribute attrs))))
+         (clojure.core/map render-attribute (sort-by key attrs))))
 
 (def ^{:doc "A list of elements that must be rendered without a closing tag."
        :private true}
