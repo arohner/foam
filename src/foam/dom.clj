@@ -184,12 +184,11 @@
   "Render an tag vector as a HTML element string."
   [{:keys [tag attrs react-id children]}]
   (assert react-id)
-  (let [attrs (merge {:data-reactid (react-id-str react-id)} attrs)]
-    (if (container-tag? tag (seq children))
-      (str "<" tag (render-attr-map attrs) ">"
-           (apply str (clojure.core/map foam/-render-to-string children))
-           "</" tag ">")
-      (str "<" tag (render-attr-map attrs) ">"))))
+  (if (container-tag? tag (seq children))
+    (str "<" tag (render-attr-map attrs) ">"
+         (apply str (clojure.core/map foam/-render-to-string children))
+         "</" tag ">")
+    (str "<" tag (render-attr-map attrs) ">")))
 
 (defrecord Element [tag attrs react-id children]
   foam/ReactRender
