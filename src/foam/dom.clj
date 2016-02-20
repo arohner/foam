@@ -217,11 +217,16 @@
   [s]
   (map->Text {:s s}))
 
+(defn assert-valid-element! [e]
+  (assert (or (satisfies? foam/ReactDOMRender e)
+              (satisfies? foam/ReactRender e)) (format "%s is does not satisfy foam/ReactDOMRender" e))
+
+  (when (satisfies? foam/ReactDOMRender e)
+    (doseq [c (foam/-children e)]
+      (assert-valid-element! c))))
+
 (defn valid-element? [e]
-  (assert (satisfies? foam/ReactDOMRender e))
-  (assert (every? (fn [c]
-                    (or (satisfies? foam/ReactDOMRender c)
-                        (satisfies? foam/ReactRender c))) (foam/-children e)))
+  (assert-valid-element! e)
   (and (satisfies? foam/ReactDOMRender e)
        (every? (fn [c]
                  (or (satisfies? foam/ReactDOMRender c)
@@ -233,13 +238,16 @@
   {:post [(valid-element? %)]}
   (assert (name tag))
   (assert (or (nil? attrs) (map? attrs)) (format "elem %s attrs invalid" elem))
-  (let [children (doall (clojure.core/map (fn [c]
-                                            (cond
-                                              (satisfies? foam/ReactDOMRender c) c
-                                              (satisfies? foam/ReactRender c) c
-                                              (string? c) (text-node c)
-                                              :else (do
-                                                      (assert false c)))) children))]
+  (let [children (doall (->> (clojure.core/map (fn [c]
+                                                 (cond
+                                                   (satisfies? foam/ReactDOMRender c) c
+                                                   (satisfies? foam/ReactRender c) c
+                                                   (string? c) (text-node c)
+                                                   (nil? c) nil
+                                                   :else (do
+                                                           (println "invalid child element:" c (class c))
+                                                           (assert false)))) children)
+                             (filter identity)))]
 
     (map->Element {:tag (name tag)
                    :attrs attrs
