@@ -59,13 +59,12 @@ other parts of the React API are unnecessary.
 
 foam.dom currently uses code from hiccup to render HTML.
 
-
 # Constructing
 
 The main difference between Foam and Om is in om/build. om/build
 creates a JS object that holds references to the app-state, cursor and
 holds the Om component. Om uses descriptors to specify implementations
-of React protocols. Currently, Foam does not implement descriptors.
+of React protocols. Currently, Foam does not support pluggable descriptors.
 
 `foam/build` instead creates a defrecord OmComponent that holds the same
 information (app-state, cursor, om component). OmComponent implements
@@ -73,8 +72,7 @@ ReactRender.
 
 # Missing Features
 
-- descriptors
-- cursors other than MapCursor
+- pluggable descriptors.
 
 # Suggestions For Merging With Om
 
