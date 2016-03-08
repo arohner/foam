@@ -54,6 +54,15 @@
 (defprotocol ICursorDerive
   (-derive [cursor derived state path]))
 
+(defn -map-cursor-lookup
+  ([this k]
+   (-map-cursor-lookup this k nil))
+  ([this k not-found]
+   (let [v (get (.value this) k ::not-found)]
+     (if-not (= v ::not-found)
+       (-derive this v (.state this) (conj (.path this) k))
+       not-found))))
+
 (deftype MapCursor [value state path]
   clojure.lang.IDeref
   (deref [this]
@@ -65,12 +74,95 @@
   (-state [_] state)
   clojure.lang.ILookup
   (valAt [this k]
-    (.valAt this k nil))
+    (-map-cursor-lookup this k nil))
   (valAt [this k not-found]
-    (let [v (get value k ::not-found)]
-      (if-not (= v ::not-found)
-        (-derive this v state (conj path k))
-        not-found))))
+    (-map-cursor-lookup this k not-found))
+  clojure.lang.IFn
+  (invoke [this k]
+    (.valAt this k))
+  (invoke [this k not-found]
+    (println "mapcursor invoke" this k not-found)
+    (.valAt this k not-found)))
+
+(deftype IndexedCursor [value state path]
+  clojure.lang.IDeref
+  (deref [this]
+    (get-in @state path ::invalid))
+  clojure.lang.IObj
+  (withMeta [_ new-meta]
+    (IndexedCursor. (with-meta value new-meta) state path))
+  clojure.lang.IMeta
+  (meta [_]
+    (clojure.core/meta value))
+  IValue
+  (-value [_] value)
+  ICursor
+  (-path [_] path)
+  (-state [_] state)
+  ;; ITransact
+  ;; (-transact! [this korks f tag]
+  ;;   (transact* state this korks f tag))
+  ;; ICloneable
+  ;; (-clone [_]
+  ;;   (IndexedCursor. value state path))
+  clojure.lang.Counted
+  (count [_]
+    (clojure.core/count value))
+  clojure.lang.IPersistentCollection
+  (cons [_ o]
+    (IndexedCursor. (clojure.core/cons value o) state path))
+  (empty [_]
+    (IndexedCursor. (clojure.core/empty value) state path))
+  clojure.lang.ILookup
+  (valAt [this n]
+    (nth this n nil))
+  (valAt [this n not-found]
+    (nth this n not-found))
+  clojure.lang.IFn
+  (invoke [this k]
+    (.valAt this k))
+  (invoke [this k not-found]
+    (.valAt this k not-found))
+  clojure.lang.Indexed
+  (nth [this n]
+    (-derive this (nth value n) state (conj path n)))
+  (nth [this n not-found]
+    (if (< n (count value))
+      (-derive this (nth value n not-found) state (conj path n))
+      not-found))
+  clojure.lang.Seqable
+  (seq [this]
+    (when (pos? (count value))
+      (map (fn [v i] (-derive this v state (conj path i))) value (range))))
+  clojure.lang.Associative
+  (containsKey [_ k]
+    (contains? value k))
+  (assoc [this n v]
+    (-derive this (assoc value n v) state path))
+  clojure.lang.IPersistentStack
+  (peek [this]
+    (-derive this (clojure.core/peek value) state path))
+  (pop [this]
+    (-derive this (clojure.core/pop value) state path))
+  ;; IEquiv
+  ;; (-equiv [_ other]
+  ;;   (if (cursor? other)
+  ;;     (= value (-value other))
+  ;;     (= value other)))
+  Object
+  (hashCode [_]
+    (.hashCode value))
+  ;; IKVReduce
+  ;; (-kv-reduce [_ f init]
+  ;;   (-kv-reduce value f init))
+  ;; IPrintWithWriter
+  ;; (-pr-writer [_ writer opts]
+  ;;   (-pr-writer value writer opts))
+  )
+
+(defn indexed? [val]
+  (and (sequential? val)
+       (associative? val)))
 
 (defn to-cursor
   ([val] (to-cursor val nil []))
@@ -79,6 +171,7 @@
     (cond
       (cursor? val) val
       (map? val) (MapCursor. val state path)
+      (indexed? val) (IndexedCursor. val state path)
       :else val)))
 
 (extend-type Object
@@ -239,6 +332,15 @@
                                     :children create-om-child})))]
      (set-init-state! com)
      com)))
+
+(defn build-all
+  ([f xs]
+   (build-all f xs nil))
+  ([f xs m]
+   {:pre [(ifn? f) (or (nil? m) (map? m))]}
+   (map (fn [x i]
+          (build f x (assoc m ::index i)))
+        xs (range))))
 
 (defn root [f value {:keys [] :as options}])
 

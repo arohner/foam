@@ -211,6 +211,16 @@
     (assert (string? s))
     s))
 
+(extend-type clojure.lang.LazySeq
+  foam/ReactRender
+  (react-render [this]
+    (map foam/react-render this))
+  foam/ReactDOMRender
+  (-children [this]
+    this)
+  (-render-to-string [this]
+    (str/join "" (map foam/-render-to-string this))))
+
 (defn text-node
   "HTML text node"
   [s]

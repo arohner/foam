@@ -20,6 +20,14 @@
        (dom/h1 nil "Hello World")
        (dom/p nil "Some text")))))
 
+(defn build-all-component [app owner opts]
+  (reify
+    foam/IRender
+    (render [this]
+      (dom/div nil
+       (dom/h1 nil "Hello World")
+       (foam/build-all simple-component (:bars app))))))
+
 (deftest can-build
   (is (foam/build simple-component (foam/root-cursor (app-state)) {})))
 
@@ -136,5 +144,26 @@
         cursor (foam/root-cursor state)
         com (foam/build simple-component cursor {})]
     (is (= :bar (foam/get-props com [:foo])))
+(deftest can-build-all
+  (let [app-state (atom {:todos [{:text "finish foam" :done? false}
+                                 {:text "write tests" :done? true}
+                                 {:text "profit!" :done? false}]})
+        child  (fn [app owner opts]
+                     (reify
+                       foam/IRender
+                       (render [this]
+                         (dom/div nil
+                                  (dom/div nil (:text app))))))
+        parent (fn [app owner opts]
+                 (reify
+                   foam/IRender
+                   (render [this]
+                     (dom/div nil
+                              (dom/h1 nil "Hello World")
+                              (foam/build-all child (:todos app))))))
+        com (foam/build parent (foam/root-cursor app-state) {})
+        tree (foam/react-render com)
+        s (dom/render-to-string com)]
 
-    ))
+    (is (foam/valid-dom-tree? tree))
+    (is (string? s))))
