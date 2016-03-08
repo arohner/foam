@@ -182,8 +182,7 @@
 
 (defn render-element
   "Render an tag vector as a HTML element string."
-  [{:keys [tag attrs react-id children]}]
-  (assert react-id)
+  [{:keys [tag attrs children]}]
   (if (container-tag? tag (seq children))
     (str "<" tag (render-attr-map attrs) ">"
          (apply str (clojure.core/map foam/-render-to-string children))
@@ -275,6 +274,5 @@
                                    (map-indexed (fn [i c]
                                                   (assign-react-ids c (conj id i))) children))))))
 (defn render-to-string [com]
-  (let [elem (foam/react-render com)
-        elem (assign-react-ids elem)]
+  (let [elem (foam/react-render com)]
     (foam/-render-to-string elem)))
