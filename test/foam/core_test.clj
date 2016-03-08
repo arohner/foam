@@ -143,7 +143,33 @@
   (let [state (atom {:foo :bar})
         cursor (foam/root-cursor state)
         com (foam/build simple-component cursor {})]
-    (is (= :bar (foam/get-props com [:foo])))
+    (is (= :bar (foam/get-props com [:foo])))))
+
+(deftest cursor-derive
+  (let [app-state (atom {:todos [{:text "finish foam" :done? false}
+                                 {:text "write tests" :done? true}
+                                 {:text "profit!" :done? false}]})
+        cursor (foam/root-cursor app-state)]
+    (is (foam/cursor? cursor))
+    (is (foam/cursor? (:todos cursor)))
+    (is (foam/cursor? (-> cursor :todos first)))))
+
+(deftest map-cursor-invoke
+  (let [app-state (atom {:todos [{:text "finish foam" :done? false}
+                                 {:text "write tests" :done? true}
+                                 {:text "profit!" :done? false}]})
+        cursor (foam/root-cursor app-state)]
+    (is (foam/cursor? cursor))
+    (is (cursor :todos))))
+
+(deftest index-cursor-invoke
+  (let [app-state (atom [{:text "finish foam" :done? false}
+                         {:text "write tests" :done? true}
+                         {:text "profit!" :done? false}])
+        cursor (foam/root-cursor app-state)]
+    (is (foam/cursor? cursor))
+    (is (cursor 0))))
+
 (deftest can-build-all
   (let [app-state (atom {:todos [{:text "finish foam" :done? false}
                                  {:text "write tests" :done? true}
