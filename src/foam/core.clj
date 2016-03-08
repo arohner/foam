@@ -297,7 +297,6 @@
 (defn build
   ([f cursor m]
    {:pre [(ifn? f) (or (nil? m) (map? m))]}
-   (assert (satisfies? ICursor cursor))
    (assert (valid-opts? m)
            (apply str "build options contains invalid keys, only :key, :key-fn :react-key, "
                   ":fn, :init-state, :state, and :opts allowed, given "
