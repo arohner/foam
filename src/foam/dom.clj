@@ -150,7 +150,9 @@
     (replace "\"" "&quot;")))
 
 (defn xml-attribute [name value]
-  (str " " (clojure.core/name name) "=\"" (escape-html value) "\""))
+  (let [actual-name (if (= name :className) "class" name)]
+    (cond (not (= name :dangerouslySetInnerHTML))
+      (str " " (clojure.core/name actual-name) "=\"" (escape-html value) "\""))))
 
 (defn render-attribute [[name value]]
   (cond
@@ -162,6 +164,11 @@
 (defn render-attr-map [attrs]
   (apply str
          (clojure.core/map render-attribute (sort-by key attrs))))
+
+(defn render-inner [attrs children]
+  (if (:dangerouslySetInnerHTML attrs)
+    (get-in attrs [:dangerouslySetInnerHTML :__html])
+    (apply str (clojure.core/map foam/-render-to-string children))))
 
 (def ^{:doc "A list of elements that must be rendered without a closing tag."
        :private true}
@@ -185,7 +192,7 @@
   [{:keys [tag attrs children]}]
   (if (container-tag? tag (seq children))
     (str "<" tag (render-attr-map attrs) ">"
-         (apply str (clojure.core/map foam/-render-to-string children))
+         (render-inner attrs children)
          "</" tag ">")
     (str "<" tag (render-attr-map attrs) ">")))
 
