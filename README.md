@@ -23,6 +23,13 @@ app-state to .cljc code. In your component namespaces:
 
 Everything *should* work without needing to modify your component code, with the exception of a few known limitations listed below.
 
+### App-State
+
+Like normal Om, your appstate should be an atom wrapping a map or
+vector. We recommend an app-state constructor function in .cljc, so
+it's available to both CLJ and CLJS.
+
+
 ### Server-side Rendering
 
 In clj, call
@@ -47,7 +54,6 @@ it in produciton. This list of limitations is not complete.
 
 - Not all Om protocols have been ported over yet
 - Bugs everywhere
-- because CLJ doesn't support Javascript's ... special... arity-overloading, your om component functions must use the 3 arg constructor: `(defn foo [app owner opts])`, rather than the 2-arg constructor: `(defn foo [app owner])`. `foam.core/build` only provides the 3 arity version, to reduce confusion.
 
 ## License
 
