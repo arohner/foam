@@ -67,3 +67,18 @@
         cursor (foam/root-cursor state)
         com (foam/build nested-component cursor {})]
     (is (string? (dom/render-to-string com)))))
+
+(defn inner-html-and-classname-component [app owner opts]
+  (reify
+    foam/IRender
+      (render [this]
+        (dom/p {:className "some-class" 
+                :dangerouslySetInnerHTML {
+                :__html "<span>Some inline text</span> and more text"}}))))
+
+(deftest inner-html-and-classname
+  (let [state (atom {})
+        cursor (foam/root-cursor state)
+        com (foam/build inner-html-and-classname-component cursor {})
+        com-string (dom/render-to-string com)]
+    (is (= com-string "<p class=\"some-class\"><span>Some inline text</span> and more text</p>"))))
