@@ -295,6 +295,7 @@
     (reset! (-> com :state) (-> com children init-state))))
 
 (defn build
+  ([f cursor] (build f cursor nil))
   ([f cursor m]
    {:pre [(ifn? f) (or (nil? m) (map? m))]}
    (assert (valid-opts? m)
