@@ -285,6 +285,15 @@
 
 (def-all-tags)
 
+(declare assign-react-ids)
+
+(defn determine-react-id [index element parent-id]
+  (if (associative? element)
+    (let [current-part (Integer/toString index 30)]
+      (assign-react-ids element (conj parent-id current-part)))
+    element))
+
+
 (defn assign-react-ids
   ([elem]
    (assign-react-ids elem [0]))
@@ -292,9 +301,7 @@
    (assert (vector? id))
    (let [elem (assoc elem :react-id id)]
      (update-in elem [:children] (fn [children]
-                                   (map-indexed (fn [i c]
-                                                  (let [current-part (Integer/toString i 30)]
-                                                      (assign-react-ids c (conj id current-part)))) children))))))
+                                   (map-indexed (fn [index element] (determine-react-id index element id)) children))))))
 
 (def mod-number 65521)
 
