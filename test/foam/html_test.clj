@@ -81,4 +81,4 @@
         cursor (foam/root-cursor state)
         com (foam/build inner-html-and-classname-component cursor {})
         com-string (dom/render-to-string com)]
-    (is (= com-string "<p class=\"some-class\" data-reactid=\".0\" data-react-checksum=\"577707518\"><span>Some inline text</span> and more text</p>"))))
+    (is (= com-string "<p class=\"some-class\"><span>Some inline text</span> and more text</p>"))))

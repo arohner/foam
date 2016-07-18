@@ -163,7 +163,7 @@
 
 (defn render-attr-map [attrs]
   (apply str
-         (clojure.core/map render-attribute attrs)))
+         (clojure.core/map render-attribute (sort-by key attrs))))
 
 (defn render-inner [attrs children]
   (if (:dangerouslySetInnerHTML attrs)
@@ -189,16 +189,12 @@
 
 (defn render-element
   "Render an tag vector as a HTML element string."
-  [{:keys [tag attrs react-id children]}]
-  (let [html 
-    (str "<" tag
-        (render-attr-map attrs) 
-        (when react-id 
-            (str " data-reactid=\"" (react-id-str react-id) "\""))
-        ">")]
-    (if (container-tag? tag (seq children))
-        (str html (render-inner attrs children) "</" tag ">")
-        html)))
+  [{:keys [tag attrs children]}]
+  (if (container-tag? tag (seq children))
+    (str "<" tag (render-attr-map attrs) ">"
+         (render-inner attrs children)
+         "</" tag ">")
+    (str "<" tag (render-attr-map attrs) ">")))
 
 (defrecord Element [tag attrs react-id children]
   foam/ReactRender
@@ -285,15 +281,6 @@
 
 (def-all-tags)
 
-(declare assign-react-ids)
-
-(defn determine-react-id [index element parent-id]
-  (if (associative? element)
-    (let [current-part (Integer/toString index 30)]
-      (assign-react-ids element (conj parent-id current-part)))
-    element))
-
-
 (defn assign-react-ids
   ([elem]
    (assign-react-ids elem [0]))
@@ -301,30 +288,8 @@
    (assert (vector? id))
    (let [elem (assoc elem :react-id id)]
      (update-in elem [:children] (fn [children]
-                                   (map-indexed (fn [index element] (determine-react-id index element id)) children))))))
-
-(def mod-number 65521)
-
-(defn react-adler32* [data max-index a b i]
-  (if (= max-index i)
-    (bit-or a (clojure.lang.Numbers/shiftLeftInt b 16))
-    (let [a (mod (+ a (Character/codePointAt data i)) mod-number)
-          b (mod (+ a b) mod-number)]
-      (recur data max-index a b (inc i)))))
-
-
-(defn react-adler32 [data]
-  (react-adler32* data (count data) 1 0 0))
-
-
-(defn add-checksum-to-markup [markup]
-  (let [checksum (react-adler32 markup)]
-    (str/replace-first markup ">" (str " " "data-react-checksum" "=\"" checksum "\">"))
-  ))
-
+                                   (map-indexed (fn [i c]
+                                                  (assign-react-ids c (conj id i))) children))))))
 (defn render-to-string [com]
-  (-> com
-    (foam/react-render)
-    (assign-react-ids)
-    (foam/-render-to-string)
-    (add-checksum-to-markup)))
+  (let [elem (foam/react-render com)]
+    (foam/-render-to-string elem)))
