@@ -190,15 +190,17 @@
 (defn render-element
   "Render an tag vector as a HTML element string."
   [{:keys [tag attrs react-id children]}]
-  (let [html 
-    (str "<" tag
-        (render-attr-map attrs) 
-        (when react-id 
-            (str " data-reactid=\"" (react-id-str react-id) "\""))
-        ">")]
+  (let [html
+        (str "<" tag
+             (render-attr-map attrs)
+             (when react-id
+               (format " data-reactid=\"%s\"" (cond
+                                                (vector? react-id) (react-id-str react-id)
+                                                (integer? react-id) (str react-id))))
+             ">")]
     (if (container-tag? tag (seq children))
-        (str html (render-inner attrs children) "</" tag ">")
-        html)))
+      (str html (render-inner attrs children) "</" tag ">")
+      html)))
 
 (defrecord Element [tag attrs react-id children]
   foam/ReactRender
@@ -303,6 +305,24 @@
      (update-in elem [:children] (fn [children]
                                    (map-indexed (fn [index element] (determine-react-id index element id)) children))))))
 
+(defn get-next-id [counter]
+  (let [v @counter]
+    (swap! counter inc)
+    v))
+
+(defn assign-react-ids-15
+  "Algorithm for assigning react-id in react 15 and higher"
+  ([elem]
+   (let [counter (atom 1)]
+     (-> elem
+         (assoc-in [:attrs :data-reactroot] "")
+         (assign-react-ids-15 counter))))
+  ([elem counter]
+   (let [elem (assoc elem :react-id (get-next-id counter))]
+     (update-in elem [:children] (fn [children]
+                                   (mapv (fn [elem]
+                                           (assign-react-ids-15 elem counter)) children))))))
+
 (def mod-number 65521)
 
 (defn react-adler32* [data max-index a b i]
@@ -312,10 +332,8 @@
           b (mod (+ a b) mod-number)]
       (recur data max-index a b (inc i)))))
 
-
 (defn react-adler32 [data]
   (react-adler32* data (count data) 1 0 0))
-
 
 (defn add-checksum-to-markup [markup]
   (let [checksum (react-adler32 markup)]
@@ -324,7 +342,7 @@
 
 (defn render-to-string [com]
   (-> com
-    (foam/react-render)
-    (assign-react-ids)
-    (foam/-render-to-string)
-    (add-checksum-to-markup)))
+      (foam/react-render)
+      (assign-react-ids-15)
+      (foam/-render-to-string)
+      (add-checksum-to-markup)))

@@ -29,7 +29,6 @@ Like normal Om, your appstate should be an atom wrapping a map or
 vector. We recommend an app-state constructor function in .cljc, so
 it's available to both CLJ and CLJS.
 
-
 ### Server-side Rendering
 
 In clj, call
@@ -54,6 +53,18 @@ it in produciton. This list of limitations is not complete.
 
 - Not all Om protocols have been ported over yet
 - Bugs everywhere
+
+## Version Compatiblity
+
+React changed its algorithm for assigning react-ids to elements
+between 0.14 and 15.0. If you're using react 15 or higher, you'll need
+foam 0.1.8 or later. Conversely, use foam 0.1.7 for react < 15. Recent
+Om alphas, such as `1.0.0-alpha40` are known to work with foam.
+
+React < 15   | >= 15
+Om     0.9   | 1.0.0-alpha40
+foam   0.1.7 | 0.1.8
+
 
 ## License
 
