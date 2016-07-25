@@ -319,10 +319,13 @@
          (assoc-in [:attrs :data-reactroot] "")
          (assign-react-ids-15 counter))))
   ([elem counter]
-   (let [elem (assoc elem :react-id (get-next-id counter))]
-     (update-in elem [:children] (fn [children]
-                                   (mapv (fn [elem]
-                                           (assign-react-ids-15 elem counter)) children))))))
+   (if (seq? elem)
+     (c/map (fn [e]
+              (assign-react-ids-15 e counter)) elem)
+     (let [elem (assoc elem :react-id (get-next-id counter))]
+       (update-in elem [:children] (fn [children]
+                                     (c/map (fn [e]
+                                              (assign-react-ids-15 e counter)) children)))))))
 
 (def mod-number 65521)
 
