@@ -1,5 +1,6 @@
 (ns foam.dom
-  (:require [clojure.string :as str]
+  (:require [clojure.core :as c]
+            [clojure.string :as str]
             [foam.core :as foam]))
 
 ;; tags that om.dom defines functions for
@@ -227,12 +228,12 @@
 (extend-type clojure.lang.LazySeq
   foam/ReactRender
   (react-render [this]
-    (map foam/react-render this))
+    (c/map foam/react-render this))
   foam/ReactDOMRender
   (-children [this]
     this)
   (-render-to-string [this]
-    (str/join "" (map foam/-render-to-string this))))
+    (str/join "" (c/map foam/-render-to-string this))))
 
 (defn text-node
   "HTML text node"
