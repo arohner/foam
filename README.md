@@ -61,9 +61,10 @@ between 0.14 and 15.0. If you're using react 15 or higher, you'll need
 foam 0.1.8 or later. Conversely, use foam 0.1.7 for react < 15. Recent
 Om alphas, such as `1.0.0-alpha40` are known to work with foam.
 
-React < 15   | >= 15
-Om     0.9   | 1.0.0-alpha40
-foam   0.1.7 | 0.1.8
+React| < 15   | >= 15
+-----|--------|------
+Om   |   0.9  | 1.0.0-alpha40
+foam |  0.1.7 | 0.1.8
 
 
 ## License
